@@ -245,6 +245,7 @@ public class App {
         System.out.println("外部类的静态变量 b 值是：" + Testfind.b);
 
         // 4 测试名场面
+        System.out.println("\n测试名场面：Integer 缓存机制");
         Integer x = Testfind.valueOf(100);
         Integer y = Testfind.valueOf(100);
         System.out.println(x == y); // ➔ 猜猜看？结果是 true！
