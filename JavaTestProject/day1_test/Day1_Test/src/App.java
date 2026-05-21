@@ -1,4 +1,41 @@
 public class App {
+    public class Test {
+        public void test() {
+            System.out.println("这是一个测试方法");
+        }
+    }
+
+    public static class StaticTest {
+        public void test() {
+            System.out.println("这是一个静态内部类的测试方法");
+        }
+    }
+
+    public interface OrderService {
+        void createOrder(String orderId);
+    }
+
+    public class OrderServiceImpl implements OrderService {
+        @Override
+        public void createOrder(String orderId) {
+            System.out.println("订单 " + orderId + " 已创建");
+        }
+    }
+
+    public static class StaticOrderServiceImpl implements OrderService {
+        @Override
+        public void createOrder(String orderId) {
+            System.out.println("订单 " + orderId + " 已创建（静态内部类版本）");
+        }
+    }
+
+    public class OrderServiceSapImpl implements OrderService {
+        @Override
+        public void createOrder(String orderId) {
+            System.out.println("订单 " + orderId + " 已创建（SAP 版本）");
+        }
+    }
+
     public static void main(String[] args) throws Exception {
         System.out.println("Hello, World!");
         boolean flag = true;
@@ -62,29 +99,17 @@ public class App {
         // 2. 潇洒地调用接口方法
         os.createOrder("SAP10002026");
 
-    }
+        // 💡 静态内部类，直接凭空 new，完全不需要用到 outer 对象！
+        OrderService staticOs = new StaticOrderServiceImpl();
 
-    public class Test {
-        public void test() {
-            System.out.println("这是一个测试方法");
-        }
-    }
+        // 调用方法
+        staticOs.createOrder("SAP99992026");
 
-    public static class StaticTest {
-        public void test() {
-            System.out.println("这是一个静态内部类的测试方法");
-        }
-    }
 
-    public interface OrderService {
-        void createOrder(String orderId);
-    }
+        OrderService os1 = outer.new OrderServiceSapImpl(); 
+        // 左边雷打不动，右边随时换肉身
+        os1.createOrder("SAP88882026");
 
-    public class OrderServiceImpl implements OrderService {
-        @Override
-        public void createOrder(String orderId) {
-            System.out.println("订单 " + orderId + " 已创建");
-        }
     }
 
 }
