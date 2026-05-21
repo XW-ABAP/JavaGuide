@@ -45,6 +45,63 @@ class Testfind {
             }
         }
     }
+
+    public void test2() {
+        System.out.println("\n测试名场面：Integer 缓存机制 (方法 test2)");
+        Integer i1 = 33;
+        Integer i2 = 33;
+        System.out.println(i1 == i2);// 输出 true
+    }
+
+    public void test3() {
+        System.out.println("\n测试名场面：Float 缓存机制 (方法 test3)");
+        Float i11 = 333f;
+        Float i22 = 333f;
+        System.out.println(i11 == i22);// 输出 false
+    }
+
+    public void test4() {
+        System.out.println("\n测试名场面：double 缓存机制 (方法 test4)");
+        Double i3 = 1.2;
+        Double i4 = 1.2;
+        System.out.println(i3 == i4);// 输出 false
+    }
+
+    // `Integer i1=40` 这一行代码会发生装箱，也就是说这行代码等价于 `Integer i1=Integer.
+    // valueOf(40)` 。因此，`i1` 直接使用的是缓存中的对象。而`Integer i2 = new Integer(40)` 会直接创建新的对象。
+    // 因此，答案是 `false` 。你答对了吗？
+    public void test5() {
+        System.out.println("\n测试名场面：String 缓存机制 (方法 test5)");
+        Integer i1 = 40;
+        Integer i2 = new Integer(40);
+        System.out.println(i1 == i2);
+
+        // 这个会非常慢
+        // System.out.println("\n[Testfind 内部输出] 21亿次求和结果：" + sum1());
+    }
+
+    // 注意：**如果频繁拆装箱的话，也会严重影响系统的性能。我们应该尽量避免不必要的拆装箱操作。**
+    // public static long sum() {
+    //     // 应该使用long 而不是long
+    //     Long sum = 0l;
+    //     for (long i = 0; i < Integer.MAX_VALUE; i++) {
+    //         sum += i;
+    //     }
+    //     return sum;
+    // }
+
+    // private static long sum1() {
+    //     // 应该使用long 而不是long
+    //     Long sum1 = 0l;
+    //     for (long i = 0; i < Integer.MAX_VALUE; i++) {
+    //         sum1 += i;
+    //     }
+    //     return sum1;
+    // }
+
+
+
+
 }
 
 public class App {
@@ -253,5 +310,17 @@ public class App {
         Integer m = Testfind.valueOf(200);
         Integer n = Testfind.valueOf(200);
         System.out.println(m == n); // ➔ 结果是 false！因为超出了 127，是两个不同的 new 对象！
+
+        tf.test2(); // ➔ 结果是 true！因为 33 在 -128~127 的缓存范围内，i1 和 i2 实际上是同一个对象的引用！
+
+        tf.test3();
+
+        tf.test4();
+
+        tf.test5();
+
+        // 💡 静态方法直接用 类名. 调出来，并打印结果
+        // System.out.println("21亿次循环求和结果（Long 慢速版）：" + Testfind.sum());
+
     }
 }
