@@ -82,25 +82,31 @@ class Testfind {
 
     // 注意：**如果频繁拆装箱的话，也会严重影响系统的性能。我们应该尽量避免不必要的拆装箱操作。**
     // public static long sum() {
-    //     // 应该使用long 而不是long
-    //     Long sum = 0l;
-    //     for (long i = 0; i < Integer.MAX_VALUE; i++) {
-    //         sum += i;
-    //     }
-    //     return sum;
+    // // 应该使用long 而不是long
+    // Long sum = 0l;
+    // for (long i = 0; i < Integer.MAX_VALUE; i++) {
+    // sum += i;
+    // }
+    // return sum;
     // }
 
     // private static long sum1() {
-    //     // 应该使用long 而不是long
-    //     Long sum1 = 0l;
-    //     for (long i = 0; i < Integer.MAX_VALUE; i++) {
-    //         sum1 += i;
-    //     }
-    //     return sum1;
+    // // 应该使用long 而不是long
+    // Long sum1 = 0l;
+    // for (long i = 0; i < Integer.MAX_VALUE; i++) {
+    // sum1 += i;
+    // }
+    // return sum1;
     // }
 
-
-
+    public void test6() {
+        System.out.println("\n测试名场面：为什么浮点数运算的时候会有精度丢失的风险？ (方法 test6)");
+        float a = 2.0f - 1.9f;
+        float b = 1.8f - 1.7f;
+        System.out.printf("%.9f", a);// 0.100000024
+        System.out.println(b);// 0.099999905
+        System.out.println(a == b);// false
+    }
 
 }
 
@@ -321,6 +327,9 @@ public class App {
 
         // 💡 静态方法直接用 类名. 调出来，并打印结果
         // System.out.println("21亿次循环求和结果（Long 慢速版）：" + Testfind.sum());
+
+
+        tf.test6();
 
     }
 }
