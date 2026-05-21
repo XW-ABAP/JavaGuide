@@ -1,4 +1,8 @@
 import static java.lang.System.out;
+// 💡 告诉 Java 编译器，老子要用数学大杀器 BigDecimal 了！
+
+import java.math.BigDecimal;
+
 
 /**
  * 外部类 App：作为整个程序的容器
@@ -107,6 +111,20 @@ class Testfind {
         System.out.println(b);// 0.099999905
         System.out.println(a == b);// false
     }
+
+
+    public void testPrice() {
+    System.out.println("\n💡 企业级财务正规军：BigDecimal 精度演示");
+    
+    // 🚨 避坑注意：必须用字符串 "2.0" 构造，如果直接塞 2.0f 进去就又被浮点数污染了
+    BigDecimal a = new BigDecimal("2.0");
+    BigDecimal b = new BigDecimal("1.9");
+    
+    // 减法不能直接用 - 号，必须调用方法 .subtract()
+    BigDecimal result = a.subtract(b);
+    
+    System.out.println("精确计算 2.0 - 1.9 = " + result); // ✅ 稳稳当当地输出：0.1
+}
 
 }
 
@@ -330,6 +348,8 @@ public class App {
 
 
         tf.test6();
+
+        tf.testPrice();
 
     }
 }
