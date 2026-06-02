@@ -22,6 +22,10 @@ export const aiCoding = arraySidebar([
         text: "DeepSeek V4 + Claude Code 实战",
         link: "deepseek-v4-claude-code",
       },
+      {
+        text: "IDEA + CC GUI 插件实战",
+        link: "project/cc-guide",
+      },
     ],
   },
   {
@@ -49,8 +53,16 @@ export const aiCoding = arraySidebar([
         link: "cli-vs-ide",
       },
       {
+        text: "Claude Code Agent View 多会话管理",
+        link: "practices/claudecode-agentview",
+      },
+      {
         text: "AI 编程开放性面试题",
         link: "ai-ide",
+      },
+      {
+        text: "Spec Coding 规范驱动编程",
+        link: "spec-coding",
       },
     ],
   },

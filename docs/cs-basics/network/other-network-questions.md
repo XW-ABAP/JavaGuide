@@ -12,8 +12,6 @@ head:
 
 <!-- markdownlint-disable MD033 -->
 
-<!-- @include: @small-advertisement.snippet.md -->
-
 计算机网络是后端面试和校招面试中绕不开的高频考点，尤其是 **TCP/IP 网络分层、HTTP、HTTPS、DNS、WebSocket、TCP 三次握手** 这些问题，几乎贯穿了“从输入 URL 到页面展示”“接口为什么变慢”“连接为什么失败”等真实开发场景。
 
 这篇《计算机网络常见面试题总结（上）》会先从网络分层模型讲起，再梳理应用层和 HTTP 相关的核心知识点，适合用来系统复习计算机网络基础，也适合作为 Java 后端、后端开发、计算机基础面试前的速查清单。
@@ -187,6 +185,39 @@ HTTP 状态码用于描述 HTTP 请求的结果，比如 2xx 就代表请求被�
 
 关于 HTTP 和 HTTPS 更详细的对比总结，可以看我写的这篇文章：[HTTP vs HTTPS（应用层）](https://javaguide.cn/cs-basics/network/http-vs-https.html) 。
 
+### HTTPS 握手里的 RSA 和 ECDHE，到底差在哪？（应用层）
+
+RSA 和 ECDHE 的核心区别在于：**会话密钥材料是“传过去的”，还是“协商出来的”**。
+
+在 TLS 1.2 的静态 RSA 握手里，客户端生成 `PreMasterSecret`，用服务器证书里的 RSA 公钥加密后发给服务端，服务端再用 RSA 私钥解密。问题是，如果攻击者保存了当年的握手流量，后来服务器私钥又泄漏，就可能回头解出历史会话密钥，所以它没有前向安全。
+
+ECDHE 不直接传输共享秘密。客户端和服务端各自生成临时密钥对，交换临时公钥后，双方本地算出同一个共享秘密。服务器证书私钥主要用于签名认证，证明临时参数没被中间人替换，而不是用来解密会话密钥。
+
+所以一句话总结：**RSA 是客户端把秘密加密送过去；ECDHE 是双方用临时密钥协商出秘密。ECDHE 支持前向安全，也因此成为现代 HTTPS 的主流方向。**
+
+详细介绍：[HTTPS 握手里的 RSA 和 ECDHE，到底差在哪？（应用层）](./https-rsa-vs-ecdhe)
+
+### ⭐️有了HTTP，为什么还要RPC？
+
+HTTP 和 RPC 不是谁取代谁的关系，也不是谁更高级的问题。
+
+HTTP 能调服务，RPC 也能调服务。真正的区别在于，你是想把远程调用当成一次“资源访问”，还是当成一次“方法调用”。
+
+如果是对外接口，比如 Web、App、第三方系统接入，HTTP 通常更合适。它通用、好调试、接入成本低，别人拿 Postman、curl 就能测。  
+如果是公司内部服务互调，尤其是服务多、调用链长、接口频繁调用，还要考虑服务发现、超时、重试、负载均衡、链路追踪这些问题，RPC 会更顺手一些。它不是单纯为了快，而是把内部服务调用里的很多麻烦事一起处理掉。
+
+所以，别再简单背“HTTP 对外，RPC 对内”了。
+
+这句话可以帮助入门，但真做项目时，还得看你的调用对象、团队基础设施、排查成本、性能要求和后续维护成本。
+
+系统规模不大，用 HTTP 已经跑得很稳，就别为了“看起来更微服务”强上 RPC。
+
+内部调用越来越复杂，HTTP SDK、网关、监控、重试这些东西越补越多，那就可以认真考虑 RPC。
+
+一句话：**HTTP 没那么弱，RPC 也没那么神。选哪个，主要看它能不能用更低成本解决你现在的问题。**
+
+详细介绍：[⭐️有了HTTP，为什么还要RPC？](./http-vs-rpc.md)
+
 ### HTTP/1.0 和 HTTP/1.1 有什么区别？
 
 ![HTTP/1.0 和 HTTP/1.1 对比](https://oss.javaguide.cn/github/javaguide/cs-basics/network/http1.0-vs-http1.1.png)
@@ -205,7 +236,7 @@ HTTP 状态码用于描述 HTTP 请求的结果，比如 2xx 就代表请求被�
 
 - **多路复用（Multiplexing）**：HTTP/2.0 在同一连接上可以同时传输多个请求和响应（可以看作是 HTTP/1.1 中长链接的升级版本），互不干扰。HTTP/1.1 则使用串行方式，每个请求和响应都需要独立的连接，而浏览器为了控制资源会有 6-8 个 TCP 连接的限制。这使得 HTTP/2.0 在处理多个请求时更加高效，减少了网络延迟和提高了性能。
 - **二进制帧（Binary Frames）**：HTTP/2.0 使用二进制帧进行数据传输，而 HTTP/1.1 则使用文本格式的报文。二进制帧更加紧凑和高效，减少了传输的数据量和带宽消耗。
-- **队头阻塞**：HTTP/2 引入了多路复用技术，允许多个请求和响应在单个 TCP 连接上并行交错传输，解决了 HTTP/1.1 应用层的队头阻塞问题，但 HTTP/2 依然受到 TCP 层队头阻塞 的影响。
+- **队头阻塞**：HTTP/2 引入了多路复用技术，允许多个请求和响应在单个 TCP 连接上并行交错传输，解决了 HTTP/1.1 应用层的队头阻塞问题，但 HTTP/2 依然受到 TCP 层队头阻塞的影响。
 - **头部压缩（Header Compression）**：HTTP/1.1 支持`Body`压缩，`Header`不支持压缩。HTTP/2.0 支持对`Header`压缩，使用了专门为`Header`压缩而设计的 HPACK 算法，减少了网络开销。
 - **服务器推送（Server Push）**：HTTP/2.0 支持服务器推送，可以在客户端请求一个资源时，将其他相关资源一并推送给客户端，从而减少了客户端的请求次数和延迟。而 HTTP/1.1 需要客户端自己发送请求来获取相关资源。
 
@@ -504,6 +535,29 @@ PING 用到的 ICMP Echo Request（类型为 8 ） 和 ICMP Echo Reply（类型�
 
 - PING 命令会向目标主机发送 ICMP Echo Request。
 - 如果两个主机的连通性正常，目标主机会返回一个对应的 ICMP Echo Reply。
+
+### ⭐️能 Ping 通，TCP 就一定能连通吗？
+
+先说结论：**不是**。
+
+Ping 使用 ICMP（网络层），TCP 连接使用 TCP（传输层），两者可能经过同一条网络路径，但中间设备会按协议类型、端口、连接状态和安全策略分别处理。你能 Ping 通，只能说明 ICMP Echo 这条路径能往返，不等于目标 TCP 端口一定可达。
+
+![ICMP与TCP路径差异](https://oss.javaguide.cn/github/javaguide/cs-basics/network/can-ping-but-tcp-may-not-connect-icmp-and-tcp-path-differences.png)
+
+常见原因有这几种：
+
+- **防火墙策略不同**：很多网络设备允许 ICMP（方便运维探测），但 TCP 端口规则收得更紧，可能只开放了 `22`、`80`、`443`，其他端口一律不放。
+- **服务没启动或端口没监听**：主机能回 ICMP，但 Nginx 没启动、MySQL 没监听，Ping 通但 TCP 连不上。
+- **中间有 NAT / 负载均衡 / 安全设备**：公网 IP 后面可能不是一台真实服务器，ICMP 响应可能来自中间设备，不能直接等同于后端服务可用。
+- **HTTPS 还可能卡在 TLS 握手的 SNI**：TCP 三次握手可能成功了，但 `ClientHello` 里的 SNI 被中间设备识别并拦截，导致连接重置或卡住。
+
+反过来也成立：**Ping 不通，不代表 TCP 一定不通**。有些服务器或云安全组直接禁 ICMP，但业务端口正常工作。
+
+排查建议：先看 DNS（域名场景），再用 `ping` 看 ICMP，然后用 `nc` 测端口，最后用 `curl` 或 `openssl s_client` 看 HTTPS / TLS。别用一个命令过早下结论。
+
+![HTTPS连接排查层次](https://oss.javaguide.cn/github/javaguide/cs-basics/network/can-ping-but-tcp-may-not-connect-https-connection-troubleshooting-layers.png)
+
+详细介绍：[能 Ping 通，TCP 就一定能连通吗？](./can-ping-but-tcp-may-not-connect.md)
 
 ## DNS
 

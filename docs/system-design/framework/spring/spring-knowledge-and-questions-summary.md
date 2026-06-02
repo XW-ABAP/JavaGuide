@@ -10,8 +10,6 @@ head:
       content: Spring面试题,Spring框架,Bean生命周期,IoC,AOP,依赖注入,事务,Spring常见问题
 ---
 
-<!-- @include: @small-advertisement.snippet.md -->
-
 这篇文章主要是想通过一些问题，加深大家对于 Spring 的理解，所以不会涉及太多的代码！
 
 下面的很多问题我自己在使用 Spring 的过程中也并没有注意，自己也是临时查阅了很多资料和书籍补上的。网上也有一些很多关于 Spring 常见问题/面试题整理的文章，我感觉大部分都是互相 copy，而且很多问题也不是很好，有些回答也存在问题。所以，自己花了一周的业余时间整理了一下，希望对大家有帮助。
@@ -486,8 +484,8 @@ public class UserThreadLocal {
 
 ### ⭐️Bean 的生命周期了解么?
 
-1. **创建 Bean 的实例**：Bean 容器首先会找到配置文件中的 Bean 定义，然后使用 Java 反射 API 来创建 Bean 的实例。
-2. **Bean 属性赋值/填充**：为 Bean 设置相关属性和依赖，例如`@Autowired` 等注解注入的对象、`@Value` 注入的值、`setter`方法或构造函数注入依赖和值、`@Resource`注入的各种资源。
+1. **创建 Bean 的实例**：Bean 容器首先会找到配置文件中的 Bean 定义，然后选用适当的实例化策略（工厂方法、构造函数自动装配或者简单实例化）通过 Java 反射 API 来创建 Bean 的实例。
+2. **Bean 属性赋值/填充**：为 Bean 设置相关属性和依赖，例如处理标记在字段或 Setter 方法上的 `@Autowired`、`@Value`、`@Resource` 等注解。
 3. **Bean 初始化**：
    - 如果 Bean 实现了 `BeanNameAware` 接口，调用 `setBeanName()`方法，传入 Bean 的名字。
    - 如果 Bean 实现了 `BeanClassLoaderAware` 接口，调用 `setBeanClassLoader()`方法，传入 `ClassLoader`对象的实例。

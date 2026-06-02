@@ -1,18 +1,20 @@
 ---
-title: RPC基础知识总结
+title: RPC 远程过程调用详解：原理、调用流程、序列化协议与框架选型
 category: 分布式
-description: RPC远程过程调用基础详解，讲解RPC核心原理、调用流程（客户端Stub/服务端Stub/网络传输）、序列化协议（Protobuf/Hessian/Kryo）及Dubbo/gRPC/Thrift等常见RPC框架对比分析。
+description: RPC 远程过程调用基础详解，讲解 RPC 的核心原理、调用流程、动态代理、序列化协议、网络传输、服务发现，以及 Dubbo、gRPC、Thrift 等常见框架选型。
 tag:
   - RPC
 head:
   - - meta
     - name: keywords
-      content: RPC,远程过程调用,RPC原理,RPC框架,Dubbo,gRPC,序列化,Stub,动态代理,RPC面试题
+      content: RPC,RPC 原理,远程过程调用,动态代理,序列化,服务发现,Dubbo,gRPC,Thrift,微服务通信,RPC 面试题
 ---
 
 这篇文章会简单介绍一下 RPC 相关的基础概念。
 
 ## RPC 是什么?
+
+![RPC 概览](https://oss.javaguide.cn/github/javaguide/distributed-system/rpc/rpc-overview.png)
 
 **RPC（Remote Procedure Call）** 即远程过程调用，通过名字我们就能看出 RPC 关注的是远程调用而非本地调用。
 
@@ -36,7 +38,7 @@ head:
 
 具体原理图如下，后面我会串起来将整个 RPC 的过程给大家说一下。
 
-![RPC原理图](https://oss.javaguide.cn/github/javaguide/distributed-system/rpc/37345851.jpg)
+![RPC 原理图](https://oss.javaguide.cn/github/javaguide/distributed-system/rpc/rpc-principle.png)
 
 1. 服务消费端（client）以本地调用的方式调用远程服务；
 1. 客户端 Stub（client stub） 接收到调用后负责将方法、参数等组装成能够进行网络传输的消息体（序列化）：`RpcRequest`；
@@ -65,7 +67,7 @@ Apache Dubbo 是一款微服务框架，为大规模微服务实践提供高性�
 
 Dubbo 提供了从服务定义、服务发现、服务通信到流量管控等几乎所有的服务治理能力，支持 Triple 协议（基于 HTTP/2 之上定义的下一代 RPC 通信协议）、应用级服务发现、Dubbo Mesh （Dubbo3 赋予了很多云原生友好的新特性）等特性。
 
-![](https://oss.javaguide.cn/github/javaguide/distributed-system/rpc/image-20220716111545343.png)
+![Dubbo3](https://oss.javaguide.cn/github/javaguide/distributed-system/rpc/image-20220716111545343.png)
 
 Dubbo 是由阿里开源，后来加入了 Apache 。正是由于 Dubbo 的出现，才使得越来越多的公司开始使用以及接受分布式架构。
 
@@ -141,6 +143,6 @@ Dubbo 也是 Spring Cloud Alibaba 里面的一个组件。
 
 ## 既然有了 HTTP 协议，为什么还要有 RPC ？
 
-关于这个问题的详细答案，请看这篇文章：[有了 HTTP 协议，为什么还要有 RPC ？](http&rpc.md) 。
+关于这个问题的详细答案，请看这篇文章：[有了 HTTP 协议，为什么还要有 RPC ？](../../cs-basics/network/http-vs-rpc.md) 。
 
 <!-- @include: @article-footer.snippet.md -->

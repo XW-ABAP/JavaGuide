@@ -41,6 +41,7 @@ export const csBasics = [
         children: [
           { text: "⭐️应用层常见协议总结", link: "application-layer-protocol" },
           { text: "⭐️HTTP vs HTTPS", link: "http-vs-https" },
+          { text: "⭐️有了HTTP，为什么还要RPC？", link: "http-vs-rpc" },
           {
             text: "HTTPS 握手里的 RSA 和 ECDHE",
             link: "https-rsa-vs-ecdhe",
@@ -60,10 +61,29 @@ export const csBasics = [
           },
           { text: "TCP TIME_WAIT 详解", link: "tcp-time-wait" },
           {
+            text: "TCP Keepalive和HTTP Keep-Alive有什么区别？",
+            link: "tcp-keepalive-vs-http-keepalive",
+          },
+          {
             text: "TCP 字节流 vs UDP 报文",
             link: "tcp-byte-stream-udp-datagram",
           },
-          { text: "⭐️TCP 传输可靠性保障", link: "tcp-reliability-guarantee" },
+          {
+            text: "⭐️TCP 如何保证可靠传输？",
+            link: "tcp-reliability-guarantee",
+          },
+          {
+            text: "能 Ping 通，TCP 就一定能连通吗？",
+            link: "can-ping-but-tcp-may-not-connect",
+          },
+          {
+            text: "TCP 和 UDP 可以使用同一个端口吗？",
+            link: "can-tcp-and-udp-use-the-same-port",
+          },
+          {
+            text: "一台主机最多能保持多少个 TCP 连接？",
+            link: "maximum-number-of-tcp-connections-per-host",
+          },
         ],
       },
       {

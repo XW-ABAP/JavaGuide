@@ -10,8 +10,6 @@ head:
       content: 计算机网络面试题,TCP vs UDP,TCP三次握手,HTTP/3 QUIC,IPv4 vs IPv6,TCP可靠性,IP地址,NAT协议,ARP协议,传输层面试,网络层高频题,基于TCP协议,基于UDP协议,队头阻塞,四次挥手
 ---
 
-<!-- @include: @article-header.snippet.md -->
-
 计算机网络面试题里，真正容易被追问到细节的部分，往往集中在 **TCP、UDP、IP、ARP、NAT、IPv4/IPv6** 这些传输层和网络层知识点上。比如：为什么 TCP 可靠？为什么要三次握手和四次挥手？HTTP/3 为什么改用基于 UDP 的 QUIC？这些问题不仅考概念，也考你对网络通信过程的理解。
 
 这篇《计算机网络常见面试题总结（下）》会重点梳理 TCP 与 UDP、TCP 连接管理、可靠传输、IP 地址、ARP、NAT 等后端面试高频内容，帮助你把传输层和网络层的核心考点串起来。
@@ -110,6 +108,21 @@ HTTP/3.0 之前是基于 TCP 协议的，而 HTTP/3.0 将弃用 TCP，改用 **�
 - <https://zh.wikipedia.org/zh/HTTP/3>
 - <https://datatracker.ietf.org/doc/rfc9114/>
 
+### 为什么 TCP 是面向字节流，UDP 是面向报文？
+
+![TCP 与 UDP 的消息边界](https://oss.javaguide.cn/github/javaguide/cs-basics/network/tcp-udp-byte-stream-tcp-udp-message-boundary.png)
+
+TCP 是面向字节流的。应用层写入的数据会进入内核缓冲区，TCP 只保证这些字节可靠、有序地到达对端，不保证一次 `send()` 对应一次 `recv()`，也不保留应用层消息边界。因此接收方可能一次读到多条消息，也可能只读到半条消息，这就是常说的粘包、拆包现象。
+![TCP 粘包 / 拆包为什么会出现？](https://oss.javaguide.cn/github/javaguide/cs-basics/network/tcp-udp-byte-stream-tcp-sticky-split-causes.png)
+
+UDP 是面向报文的。应用层交给 UDP 的一次数据会作为一个 UDP 数据报发送，接收端也是按数据报读取，所以天然保留消息边界。不过 UDP 不保证可靠到达，也不保证顺序。
+
+解决 TCP 粘包/拆包，本质是应用层协议自己定义消息边界。常见方案有固定长度、分隔符、长度头。工程里更常用长度头，因为它对二进制协议和变长消息更友好，但要处理字节序、最大长度限制、半包缓存和异常连接关闭等问题。
+
+![应用层如何定义消息边界？](https://oss.javaguide.cn/github/javaguide/cs-basics/network/tcp-udp-byte-stream-tcp-message-boundary-solutions.png)
+
+详细介绍：[为什么 TCP 是面向字节流，UDP 是面向报文？](./tcp-byte-stream-udp-datagram.md)
+
 ### 你知道哪些基于 TCP/UDP 的协议？
 
 TCP (传输控制协议) 和 UDP (用户数据报协议) 是互联网传输层的两大核心协议，它们为各种应用层协议提供了基础的通信服务。以下是一些常见的、分别构建在 TCP 和 UDP 之上的应用层协议：
@@ -145,6 +158,39 @@ TCP (传输控制协议) 和 UDP (用户数据报协议) 是互联网传输层�
 - **TCP** 更适合那些对数据**可靠性、完整性和顺序性**要求高的应用，如网页浏览 (HTTP/HTTPS)、文件传输 (FTP/SFTP)、邮件收发 (SMTP/POP3/IMAP)。
 - **UDP** 则更适用于那些对**实时性要求高、能容忍少量数据丢失**的应用，如域名解析 (DNS)、实时音视频 (RTP)、在线游戏、网络管理 (SNMP) 等。
 
+### ⭐️TCP Keepalive 和 HTTP Keep-Alive 有什么区别
+
+| 对比维度          | HTTP Keep-Alive                                         | TCP Keepalive                                       |
+| ----------------- | ------------------------------------------------------- | --------------------------------------------------- |
+| **所属层**        | 应用层（HTTP 协议）                                     | 传输层（TCP 协议）                                  |
+| **解决的问题**    | 复用 TCP 连接，减少重复建连、挥手、慢启动等开销         | 探测长时间空闲的 TCP 连接，对端失联后释放连接资源   |
+| **默认行为**      | HTTP/1.0 默认短连接；HTTP/1.1 默认长连接                | 默认关闭，应用需要显式开启 `SO_KEEPALIVE`           |
+| **控制粒度**      | 由 HTTP 客户端、Web 服务器或代理按连接策略控制          | 由操作系统内核控制，也可在部分平台逐 socket 调整    |
+| **常见参数**      | `Connection`、`Keep-Alive: timeout/max`、服务器超时配置 | `tcp_keepalive_time/intvl/probes` 或平台对应参数    |
+| **关闭触发**      | 到达空闲超时、请求次数上限，或任意一方主动关闭          | 空闲后发探测包，多次无响应或收到 RST 才关闭         |
+| **对端在线时**    | 服务端仍可按配置主动回收空闲连接                        | 只要对端内核能回 ACK，连接通常继续维持              |
+| **能否替代心跳**  | 不能判断业务是否健康，只能管理 HTTP 连接复用            | 不能判断应用线程池、事件循环、业务依赖是否正常      |
+| **中间层影响**    | 代理、网关可独立管理前后两段 HTTP/TCP 连接              | NAT/LB/反向代理可能让你探测到的只是某一段 TCP 连接  |
+| **HTTP/2/3 关系** | HTTP/2 禁用连接级头；HTTP/3/QUIC 不使用这套机制         | 只作用于 TCP；真正的 HTTP/3/QUIC 连接不受它直接影响 |
+
+**不同 HTTP 版本里，Keep-Alive 的默认行为不一样**：
+
+![不同 HTTP 版本里，Keep-Alive 的默认行为不一样](https://oss.javaguide.cn/github/javaguide/cs-basics/network/different-http-versions-have-different-default-keep-alive-behaviors.png)
+
+如果从"谁来决定关连接"的角度看，两个机制的态度完全相反：
+
+HTTP Keep-Alive 是"主动回收"——服务器到了超时或请求次数上限，就可以按自己的配置关闭连接，不需要先探测对方是否在线。它是一种比较主动的资源回收方式。
+
+TCP Keepalive 是"被动回收"——它必须先发探测包去问"你还在吗？"。只要对方在线、能回 ACK，服务器就只能继续维持连接，刷新定时器。只有确认对方已经不在了，才能释放资源。这是一种温和的回收策略。
+
+![TCP Keepalive 工作原理](https://oss.javaguide.cn/github/javaguide/cs-basics/network/tcp-keepalive-vs-http-keepalive-tcp-keepalive-working-principle.png)
+
+![TCP Keepalive 探测机制](https://oss.javaguide.cn/github/javaguide/cs-basics/network/tcp-keepalive-vs-http-keepalive-tcp-keepalive-detection-mechanism.png)
+
+实际项目中，两者经常同时在跑，各管各的。HTTP Keep-Alive 管的是"一条连接最多用多久、服务多少次请求"，TCP Keepalive 管的是"如果长时间没数据，检查一下对方是不是已经消失了"。两者互不干扰，也不能互相替代。
+
+详细介绍：[TCP Keepalive 和 HTTP Keep-Alive 有什么区别？](./tcp-keepalive-vs-http-keepalive.md)
+
 ### ⭐️TCP 三次握手和四次挥手（非常重要）
 
 **相关面试题**：
@@ -158,9 +204,54 @@ TCP (传输控制协议) 和 UDP (用户数据报协议) 是互联网传输层�
 
 **参考答案**：[TCP 三次握手和四次挥手（传输层）](https://javaguide.cn/cs-basics/network/tcp-connection-and-disconnection.html) 。
 
+### TCP TIME_WAIT 到底在等什么？为什么要等？
+
+**相关面试题**：
+
+1. `TIME_WAIT` 到底在等什么？
+2. `TIME_WAIT` 大量堆积会不会真的出问题？
+3. `tcp_tw_reuse` 能不能随便开？
+4. `TIME_WAIT` 和 `CLOSE_WAIT` 怎么区分？
+
+**参考答案**： [TCP TIME_WAIT 详解：为什么要等、会不会出问题、能不能复用？](./tcp-time-wait.md)。
+
 ### ⭐️TCP 如何保证传输的可靠性？（重要）
 
 [TCP 传输可靠性保障（传输层）](https://javaguide.cn/cs-basics/network/tcp-reliability-guarantee.html)
+
+### TCP 和 UDP 可以使用同一个端口吗？
+
+结论：**可以**。TCP 和 UDP 的端口绑定命名空间按传输层协议区分，同一个数字端口在不同协议下不冲突。
+
+内核收到 IP 包后，会先看 IP 层的协议标识（TCP 协议号是 `6`，UDP 是 `17`），根据协议号把报文交给对应的 TCP 或 UDP 协议栈，然后再在各自协议栈内按地址和端口分发。所以 `TCP/8080` 和 `UDP/8080` 可以共存，内核压根不会把它们当成同一条通信。
+
+![内核协议分发流程](https://oss.javaguide.cn/github/javaguide/cs-basics/network/can-tcp-and-udp-use-the-same-port-kernel-protocol-dispatching-process.png)
+
+真正容易冲突的是**同一协议**下的重复绑定，比如两个 TCP 服务通常不能同时监听同一个本地 IP 和端口；这时才涉及 `SO_REUSEADDR`、`SO_REUSEPORT` 这类 socket 复用选项。
+
+经典例子：DNS 同时使用 `UDP/53`（日常查询）和 `TCP/53`（响应过大、区域传送）；HTTP/3 常见部署是 `UDP/443`（QUIC），可以和传统 HTTPS 的 `TCP/443` 同时存在。
+
+![实际应用示例](https://oss.javaguide.cn/github/javaguide/cs-basics/network/can-tcp-and-udp-use-the-same-port-practical-application-example.png)
+
+详细介绍：[TCP 和 UDP 可以使用同一个端口吗？](./can-tcp-and-udp-use-the-same-port.md)
+
+### ⭐️一台主机上只能保持最多 65535 个 TCP 连接吗？
+
+结论：**不是**。`65535` 是最大端口号，不是连接数上限。
+
+TCP 连接靠四元组区分：源 IP、源端口、目的 IP、目的端口。只要四元组不同，内核就识别为不同连接。服务端监听同一个端口时，只要客户端 IP 或客户端端口不同，连接就可以继续增加。
+
+![TCP 连接靠四元组区分和真正的限制](https://oss.javaguide.cn/github/javaguide/cs-basics/network/maximum-number-of-tcp-connections-per-host-tcp-four-tuple-and-server-connection.png)
+
+真正限制连接数的因素：
+
+- **服务端**：主要受文件描述符、内存、CPU、网卡和应用处理能力限制，而不是端口数。
+- **客户端**：连同一个目标时，源 IP 和目的 IP:Port 都固定，只剩源端口可变，更容易撞到临时端口上限（Linux 默认约 2.8 万个）。`TIME_WAIT` 堆积会加剧这个问题。
+- **NAT 网关**：大量内网机器共享同一个公网 IP 访问同一个外部目标时，NAT 侧的公网源端口也会成为瓶颈。
+
+生产环境最常见的坑不是端口不够，而是**连接池没配好导致短连接疯狂创建和销毁**，把临时端口耗光。排查时优先看连接池和 keep-alive 是否生效，不要一上来就改内核参数。
+
+详细介绍：[一台主机上只能保持最多 65535 个 TCP 连接吗？](./maximum-number-of-tcp-connections-per-host.md)
 
 ## IP
 

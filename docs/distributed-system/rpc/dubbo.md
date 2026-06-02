@@ -1,14 +1,14 @@
 ---
-title: Dubbo面试题总结
+title: Dubbo 面试题总结：架构原理、SPI、负载均衡、服务治理与集群容错
 category: 分布式
-description: Dubbo核心知识与面试题详解，涵盖Dubbo架构原理、SPI扩展机制、负载均衡策略（随机/轮询/一致性哈希）、服务注册发现、集群容错、服务治理等核心内容。
+description: Dubbo 高频面试题总结，覆盖 Dubbo 架构原理、服务暴露与引用、SPI 扩展机制、负载均衡、集群容错、服务治理、注册中心和常见生产问题。
 tag:
   - RPC
   - Dubbo
 head:
   - - meta
     - name: keywords
-      content: Dubbo,Dubbo面试题,Dubbo原理,SPI机制,负载均衡,服务注册,集群容错,服务治理,RPC框架
+      content: Dubbo,Dubbo 面试题,Dubbo 架构,Dubbo SPI,负载均衡,集群容错,服务治理,注册中心,RPC 框架,分布式服务框架
 ---
 
 ::: tip
@@ -90,7 +90,7 @@ Dubbo 是由阿里开源，后来加入了 Apache 。正是由于 Dubbo 的出�
 
 [官方文档中的框架设计章节](https://dubbo.apache.org/zh/docs/v2.7/dev/design/) 已经介绍的非常详细了，我这里把一些比较重要的点再提一下。
 
-![dubbo-relation](https://oss.javaguide.cn/%E6%BA%90%E7%A0%81/dubbo/dubbo-relation.jpg)
+![Dubbo 架构中的核心角色](https://oss.javaguide.cn/%E6%BA%90%E7%A0%81/dubbo/dubbo-relation.jpg)
 
 上述节点简单介绍以及他们之间的关系：
 

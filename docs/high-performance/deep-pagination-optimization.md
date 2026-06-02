@@ -8,8 +8,6 @@ head:
       content: 深度分页,分页优化,LIMIT优化,MySQL分页,延迟关联,覆盖索引,游标分页
 ---
 
-<!-- @include: @small-advertisement.snippet.md -->
-
 ## 什么是深度分页？怎么导致的？
 
 查询偏移量过大的场景我们称为深度分页，这会导致查询性能较低，例如：
@@ -94,8 +92,7 @@ FROM t_order t1
 INNER JOIN (
     -- 这里的子查询可以利用覆盖索引，性能极高
     SELECT id FROM t_order ORDER BY id LIMIT 1000000, 10
-) t2 ON t1.id = t2.id
-ORDER BY t1.id;
+) t2 ON t1.id = t2.id;
 ```
 
 **工作原理**:
@@ -109,8 +106,7 @@ ORDER BY t1.id;
 -- 使用逗号进行延迟关联
 SELECT t1.* FROM t_order t1,
 (SELECT id FROM t_order ORDER BY id LIMIT 1000000, 10) t2
-WHERE t1.id = t2.id
-ORDER BY t1.id;
+WHERE t1.id = t2.id;
 ```
 
 **注意**: 虽然逗号连接子查询也能实现类似的效果，但为了代码可读性和可维护性，建议使用更规范的 `INNER JOIN` 语法。

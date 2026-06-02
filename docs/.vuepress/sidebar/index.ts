@@ -39,6 +39,10 @@ export default sidebar({
       collapsible: true,
       prefix: "interview-preparation/",
       children: [
+        {
+          text: "面试准备知识体系",
+          link: "/interview-preparation/",
+        },
         "backend-interview-plan",
         "teach-you-how-to-prepare-for-the-interview-hand-in-hand",
         "resume-guide",
@@ -56,6 +60,10 @@ export default sidebar({
       collapsible: true,
       prefix: "java/",
       children: [
+        {
+          text: "Java 知识体系",
+          link: "/java/",
+        },
         {
           text: "基础",
           prefix: "basis/",
@@ -181,6 +189,10 @@ export default sidebar({
       collapsible: true,
       children: [
         {
+          text: "数据库知识体系",
+          link: "/database/",
+        },
+        {
           text: "基础",
           icon: ICONS.BASIC,
           children: [
@@ -273,6 +285,10 @@ export default sidebar({
       collapsible: true,
       children: [
         {
+          text: "开发工具知识体系",
+          link: "/tools/",
+        },
+        {
           text: "Maven",
           icon: ICONS.MAVEN,
           prefix: "maven/",
@@ -338,6 +354,10 @@ export default sidebar({
       collapsible: true,
       children: [
         {
+          text: "系统设计知识体系",
+          link: "/system-design/",
+        },
+        {
           text: "基础知识",
           prefix: "basis/",
           icon: ICONS.BASIC,
@@ -395,8 +415,12 @@ export default sidebar({
       collapsible: true,
       children: [
         {
+          text: "分布式系统知识体系",
+          link: "/distributed-system/",
+        },
+        {
           text: "⭐分布式高频面试题",
-          link: "https://interview.javaguide.cn/distributed-system/distributed-system.html",
+          link: "distributed-system-interview-questions",
         },
         {
           text: "理论&算法&协议",
@@ -404,52 +428,80 @@ export default sidebar({
           prefix: "protocol/",
           collapsible: true,
           children: [
-            "cap-and-base-theorem",
-            "paxos-algorithm",
-            "raft-algorithm",
-            "zab",
-            "gossip-protocol",
-            "consistent-hashing",
+            { text: "CAP定理与BASE理论详解", link: "cap-and-base-theorem" },
+            { text: "Paxos算法详解", link: "paxos-algorithm" },
+            { text: "Raft算法详解", link: "raft-algorithm" },
+            { text: "ZAB协议详解", link: "zab" },
+            { text: "Gossip协议详解", link: "gossip-protocol" },
+            { text: "一致性哈希算法详解", link: "consistent-hashing" },
           ],
         },
         {
           text: "API网关",
           icon: ICONS.GATEWAY,
-          children: ["api-gateway", "spring-cloud-gateway-questions"],
+          children: [
+            { text: "API网关基础知识总结", link: "api-gateway" },
+            {
+              text: "Spring Cloud Gateway面试题总结",
+              link: "spring-cloud-gateway-questions",
+            },
+          ],
         },
         {
           text: "分布式ID",
           icon: ICONS.ID,
-          children: ["distributed-id", "distributed-id-design"],
+          children: [
+            { text: "分布式ID生成方案详解", link: "distributed-id" },
+            { text: "分布式ID设计实战指南", link: "distributed-id-design" },
+          ],
         },
         {
           text: "分布式锁",
           icon: ICONS.LOCK,
-          children: ["distributed-lock", "distributed-lock-implementations"],
+          children: [
+            { text: "分布式锁入门介绍", link: "distributed-lock" },
+            {
+              text: "分布式锁常见实现方案总结",
+              link: "distributed-lock-implementations",
+            },
+          ],
         },
         {
           text: "分布式事务",
           icon: ICONS.TRANSACTION,
-          children: ["distributed-transaction"],
+          children: [
+            { text: "分布式事务解决方案总结", link: "distributed-transaction" },
+          ],
         },
         {
           text: "分布式配置中心",
           icon: ICONS.MAVEN,
-          children: ["distributed-configuration-center"],
+          children: [
+            {
+              text: "分布式配置中心面试题总结",
+              link: "distributed-configuration-center",
+            },
+          ],
         },
         {
           text: "RPC",
           prefix: "rpc/",
           icon: ICONS.RPC,
           collapsible: true,
-          children: ["rpc-intro", "dubbo"],
+          children: [
+            { text: "RPC基础知识总结", link: "rpc-intro" },
+            { text: "Dubbo面试题总结", link: "dubbo" },
+          ],
         },
         {
           text: "ZooKeeper",
           prefix: "distributed-process-coordination/zookeeper/",
           icon: ICONS.FRAMEWORK,
           collapsible: true,
-          children: ["zookeeper-intro", "zookeeper-plus"],
+          children: [
+            { text: "ZooKeeper入门指南", link: "zookeeper-intro" },
+            { text: "ZooKeeper进阶详解", link: "zookeeper-plus" },
+          ],
         },
       ],
     },
@@ -459,6 +511,14 @@ export default sidebar({
       prefix: "high-performance/",
       collapsible: true,
       children: [
+        {
+          text: "高性能系统知识体系",
+          link: "/high-performance/",
+        },
+        {
+          text: "⭐高性能系统设计高频面试题",
+          link: "high-performance-interview-questions",
+        },
         {
           text: "CDN",
           icon: ICONS.CDN,
@@ -500,13 +560,42 @@ export default sidebar({
       prefix: "high-availability/",
       collapsible: true,
       children: [
-        "high-availability-system-design",
-        "idempotency",
-        "redundancy",
-        "limit-request",
-        "fallback-and-circuit-breaker",
-        "timeout-and-retry",
-        "performance-test",
+        {
+          text: "高可用系统知识体系",
+          link: "/high-availability/",
+        },
+        {
+          text: "⭐高可用系统面试题总结",
+          link: "high-availability-interview-questions",
+        },
+        {
+          text: "高可用系统设计指南",
+          link: "high-availability-system-design",
+        },
+        {
+          text: "⭐接口幂等方案总结",
+          link: "idempotency",
+        },
+        {
+          text: "⭐服务限流详解",
+          link: "limit-request",
+        },
+        {
+          text: "⭐超时和重试机制详解",
+          link: "timeout-and-retry",
+        },
+        {
+          text: "服务降级与熔断详解",
+          link: "fallback-and-circuit-breaker",
+        },
+        {
+          text: "冗余设计详解",
+          link: "redundancy",
+        },
+        {
+          text: "性能测试入门",
+          link: "performance-test",
+        },
       ],
     },
   ],

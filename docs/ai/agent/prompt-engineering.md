@@ -1,5 +1,5 @@
 ---
-title: 大模型提示词工程实践指南
+title: 大模型提示词工程（Prompt Engineering）是什么？提示词技巧有哪些？
 description: 深入解析 Prompt Engineering 核心概念，涵盖四要素框架、六大核心技巧（角色扮演、思维链、少样本学习、任务分解、结构化输出、XML 标签与预填充）、高级工程技巧及企业级安全实践。
 category: AI 应用开发
 head:
@@ -8,29 +8,34 @@ head:
       content: Prompt Engineering,提示词工程,CoT,Few-Shot,结构化输出,Prompt注入,AI Agent,LLM
 ---
 
-刚学 Prompt 的时候，很多人都会犯一个毛病：恨不得把所有背景、要求、限制都塞进去。
+很多朋友在写 Prompt 的时候，都会犯一个毛病：恨不得把所有背景、要求、限制都塞进去。
 
-看起来很认真，实际效果不一定好。
+看起来很详细，但效果不一定会好。Prompt 太长，模型反而容易抓不住重点。上下文里噪声一多，幻觉概率会上来，推理也会变慢。
 
-Prompt 太长，模型反而容易抓不住重点。上下文里噪声一多，幻觉概率会上来，推理也会变慢。很多时候，问题不在于你写得不够多，而是边界没讲清楚。
+Prompt 写得好不好，不在于你写得够不够多，重要的是把边界要讲清楚。
 
-Prompt（提示词）可以简单理解为给大语言模型下达的指令。模型不会像人一样“理解你的真实意图”，它是在上下文约束下预测下一个最可能出现的 token。
+通过阅读这篇文章，你可以搞懂下面这些问题：
+
+1. 什么是 Prompt？
+2. Prompt 应该怎么写？
+3. 六种常用提示技巧
+4. 复杂场景怎么处理？
+5. 企业级安全实践
+6. Prompt 在 Agent 系统里的位置，和 Context Engineering 的关系
+
+> 前置知识：本文默认你已经理解 Token、上下文窗口、Temperature、Top-p 等 LLM 底层概念。如果还不熟，可以先看[《万字拆解 LLM 运行机制：Token、上下文与采样参数》](../llm-basis/llm-operation-mechanism.md)。
+
+## 什么是 Prompt？
+
+简单来说，Prompt 就是我们输入给大语言模型（LLM）的指令。
+
+从生成机制看，LLM 会基于上下文生成后续 Token；从应用效果看，它能表现出一定的语义理解和指令跟随能力。但这种能力依赖输入上下文，边界不清时就容易偏题或编造。
 
 Prompt 要做的事，就是缩小模型的搜索范围。
 
 指令越模糊，模型越容易乱猜。指令越结构化，输出就越容易被控制。
 
-这篇文章会把 Prompt Engineering 拆开讲清楚。全文接近 5000 字，主要看这几块：
-
-1. Prompt 的四要素框架：指令、背景、输入、输出怎么拆
-2. 六种常用提示技巧：角色扮演、思维链、少样本、任务分解、结构化输出、XML 标签
-3. 复杂场景怎么处理：长文本、多步骤任务、格式不稳定
-4. 企业级安全实践：Prompt Injection 防御和输出消毒
-5. Prompt 在 Agent 系统里的位置，和 Context Engineering 的关系
-
-> 前置知识：本文默认你已经理解 Token、上下文窗口、Temperature、Top-p 等 LLM 底层概念。如果还不熟，可以先看[《万字拆解 LLM 运行机制：Token、上下文与采样参数》](../llm-basis/llm-operation-mechanism.md)。
-
-## Prompt 应该怎么写
+## Prompt 应该怎么写？
 
 Prompt 写得好不好，不看长度，看它有没有把任务说清楚。
 
@@ -69,9 +74,9 @@ Prompt 写得好不好，不看长度，看它有没有把任务说清楚。
 
 好 Prompt 把角色、任务、背景、格式都交代了。模型不需要猜太多，输出自然会稳一点。
 
-斯坦福大学的研究（Liu et al., 2023）提到过一个现象：模型对上下文中间位置的信息召回率最低，也就是常说的 “Lost in the Middle”。开头和结尾的信息更容易被注意到。
+斯坦福大学的研究（Liu et al., 2023）提到过一个现象：模型对放在上下文中间位置的关键信息，利用效果往往更差，也就是常说的 “Lost in the Middle”。开头和结尾的信息更容易被注意到。
 
-所以实践里可以把角色定义放在开头，把格式要求放在结尾。这样模型更容易记住两头的约束。
+所以实践里可以把角色定义放在开头，把格式要求放在结尾。这样模型更容易记住两头的约束。不过这不是固定公式，任务类型、模型、输入长度和格式约束都会影响最佳顺序，关键 Prompt 还是要用样例测一遍。
 
 ### 别把 Prompt 写成说明书
 
@@ -87,13 +92,23 @@ Prompt 写得好不好，不看长度，看它有没有把任务说清楚。
 
 提示词工程做的事情很朴素：不断调整输入，让模型输出更稳定。
 
-很少有人能一次写出可以直接上线的 Prompt。Guide 自己的经验是，一条最终上线的 Prompt，平均要经历 5-10 轮调整。
+很少有人能一次写出可以直接上线的 Prompt。Guide 自己的经验是，一条最终上线的 Prompt，往往要经历 5-10 轮调整。这个数字不是标准答案，关键是要覆盖正常样例、边缘样例和失败样例。
 
 通常流程就是：写一版，跑几个 case，看边缘情况，再补约束。
 
 如果你写完一版就觉得结束了，大概率是测试样例太少。
 
-## 常用提示技巧
+最小评测可以先这样做：
+
+| 步骤     | 做法                                                          |
+| -------- | ------------------------------------------------------------- |
+| 准备样例 | 选 10-30 条代表性输入，覆盖正常、边缘、异常场景               |
+| 固定变量 | 固定模型、Temperature、System Prompt 和检索材料，避免变量混杂 |
+| 记录指标 | 看格式合规率、事实错误率、字段缺失率、人工修改次数            |
+| 单点修改 | 每次只改一个 Prompt 变量，不然很难知道是哪条规则生效          |
+| 回归测试 | 上线后保留失败样例，定期回放，防止新规则修一个坏三个          |
+
+## 常用提示技巧有哪些？
 
 ![六大核心技巧](https://oss.javaguide.cn/github/javaguide/ai/context-engineering/prompt-six-core-techniques.svg)
 
@@ -109,43 +124,41 @@ Prompt 写得好不好，不看长度，看它有没有把任务说清楚。
 
 不过角色约束也不是万能的。长对话里，如果后面塞了太多无关内容，前面的角色设定会被稀释。复杂任务建议单独开新对话，别让历史上下文干扰模型判断。
 
-### 思维链（CoT）
+### 思维链（Chain-of-Thought，CoT）
 
-遇到需要推理的复杂任务时，Chain-of-Thought 很好用。
+遇到需要推理的复杂任务时，CoT 很好用。
 
 它相当于给模型留草稿纸。
 
-自回归模型每次只预测下一个 Token。如果你直接让它给结论，中间推理过程会被压缩掉。加上“请一步步思考”后，模型会把推理链条展开，逻辑漏洞和事实编造更容易暴露。
+在普通模型上，要求模型给出简要推理过程，可能提升复杂任务稳定性；但在 reasoning model 上，不应假设能看到完整内部推理链。工程实践里更建议要求模型输出“关键依据、检查步骤、最终结论”，而不是暴露完整草稿。
 
-还有个好处是方便调试。
+调试时看检查点也够用：你要知道它用了哪些变量、引用了哪些证据、在哪一步可能拐错弯，而不是把所有中间念头都打印出来。
 
-你能看到它到底在哪一步拐错了弯。
-
-Zero-shot CoT 最简单，直接加一句“请一步步思考”。
+Zero-shot CoT 最简单，直接加一句“请给出关键步骤后再回答”。
 
 ```text
 请分析这道数学题。80 的 15% 是多少？
-请一步步思考。
+请给出关键步骤后再回答。
 ```
 
 复杂一点，可以用引导式 CoT，让模型在回答前先检查几个问题。
 
 ```text
-在回答之前，先思考以下三个问题：
+在回答之前，先检查以下三个问题：
 1. 这个问题涉及哪些关键变量？
 2. 这些变量之间是什么关系？
 3. 最终答案如何验证？
 ```
 
-如果格式要求更严格，可以用 XML 标签把推理草稿和最终答案分开。
+如果格式要求更严格，可以用 XML 标签把检查过程和最终答案分开。
 
 ```xml
-在 <thinking> 标签中展示你的推理过程：
-<thinking>
-1. 首先，将 15% 转换为小数：15% = 0.15
-2. 然后，计算 0.15 × 80 = 12
-3. 最后，验证：12 / 80 = 0.15
-</thinking>
+在 <checks> 标签中列出关键检查点：
+<checks>
+1. 关键变量：80 和 15%
+2. 计算关系：80 × 0.15
+3. 校验方式：结果 / 80 应等于 0.15
+</checks>
 
 在 <answer> 标签中给出最终答案：
 <answer>12</answer>
@@ -155,13 +168,22 @@ Zero-shot CoT 最简单，直接加一句“请一步步思考”。
 
 简单查询、翻译、格式转换就没必要了。硬加只会增加延迟。
 
+这块要分场景看：
+
+| 场景            | 更适合的输出                                                         |
+| --------------- | -------------------------------------------------------------------- |
+| 教学            | 可以展示步骤，帮助读者理解                                           |
+| 调试            | 输出检查点、失败原因、引用证据                                       |
+| 生产            | 优先输出依据、引用、校验结果，减少冗长推理                           |
+| reasoning model | 不假设能拿到原始 reasoning tokens，按 API 支持使用 reasoning summary |
+
 ### 少样本学习
 
 复杂任务或者格式严格的任务，给 1-3 个示例，通常比一大段文字说明更管用。
 
 示例会告诉模型“输出应该长什么样”。这比单纯说“请输出 JSON”更直观。
 
-示例选择要注意三点：和真实任务同类型，能覆盖边缘情况，格式足够清楚。必要时可以用 XML 标签包起来。
+示例怎么选：尽量和真实任务同类型，能覆盖边缘情况，格式要足够清楚。必要时可以用 XML 标签包起来。
 
 比如：
 
@@ -225,7 +247,7 @@ BabyAGI 这类架构里，则会把任务拆给几个不同 Agent：
 
 如果你希望模型按固定格式输出，Prompt 里要把 Schema 说清楚。
 
-比如 Spring AI 里可以这样做：
+比如 Spring AI 里可以这样做。下面示例以 Spring AI 1.1.x 文档为参考，不同版本中 `BeanOutputConverter`、`ChatClient`、native structured output 开关和模型适配范围可能变化，接入前要按当前版本文档验证。
 
 ```java
 // Spring AI 实现示例
@@ -249,7 +271,7 @@ String systemPromptWithFormat = systemPrompt + "\n\n" + outputConverter.getForma
 
 不同格式各有麻烦。
 
-JSON 方便序列化，但语法严格。XML 层级清晰，但内容会变长。YAML 对流式输出友好，但缩进敏感。Markdown 可读性好，但程序解析更麻烦。
+JSON 方便序列化，但语法严格，字段缺失或类型不匹配时解析容易失败。XML 层级清晰，内容会变长。YAML 对流式输出友好，缩进出了问题很难排查。Markdown 可读性好，程序解析起来更麻烦。
 
 实际项目里，最好准备降级策略。解析失败时，记录日志、触发重试，或者给默认值兜底。
 
@@ -264,11 +286,21 @@ try {
 }
 ```
 
+更完整的失败处理链路可以这样设计：
+
+| 失败类型             | 处理方式                                     |
+| -------------------- | -------------------------------------------- |
+| JSON Schema 校验失败 | 记录原始响应、模型版本、Prompt 版本和请求 ID |
+| 字段缺失             | 可重试一次，把缺失字段和期望类型反馈给模型   |
+| 类型错误             | 做类型转换前先校验，避免把脏数据写进业务库   |
+| 枚举越界             | 映射到 `UNKNOWN` 或走人工审核，不要静默吞掉  |
+| 重试仍失败           | 使用兜底模板或人工处理，并统计失败率         |
+
 ### 原生结构化输出
 
 除了用 Prompt 引导格式，现在很多模型也支持原生结构化输出。
 
-这种方式更靠谱，因为 JSON Schema 会直接传给模型的专用 API，而不是靠自然语言提醒模型“请按这个格式来”。
+原生结构化输出通常会把 Schema 作为 API 参数传入，由模型服务或框架层做约束，比单纯自然语言要求更可靠。但不同厂商和 SDK 的实现不一样，仍要做本地校验和失败重试。
 
 ```java
 // 启用原生结构化输出（适用于支持该特性的模型）
@@ -279,12 +311,14 @@ ActorsFilms result = ChatClient.create(chatModel).prompt()
     .entity(ActorsFilms.class);
 ```
 
-当前支持原生结构化输出的模型包括：
+如果按 Spring AI 1.1.x 文档看，native structured output 支持范围包括：
 
 - OpenAI：GPT-4o 及更新模型
-- Anthropic：Claude Sonnet 4.5 及更新模型（Claude 3.5 系列不支持原生结构化输出）
-- Google Gemini：Gemini 1.5 Pro 及更新模型
+- Anthropic：Claude 3.5 Sonnet 及更新模型
+- Vertex AI Gemini：Gemini 1.5 Pro 及更新模型
 - Mistral AI：Mistral Small 及更新模型
+
+如果讨论 Claude API 官方 structured outputs，则支持范围又是另一套，应以 Anthropic 当前模型列表和 `output_config.format` 文档为准，不要和 Spring AI 适配层混写。
 
 这里有个限制：原生结构化输出依赖模型和框架支持。换模型、换 SDK、换网关时，最好先跑一遍兼容性测试，别默认所有模型都能稳定遵守 Schema。
 
@@ -292,7 +326,7 @@ ActorsFilms result = ChatClient.create(chatModel).prompt()
 
 XML 标签和预填充经常一起用，主要是为了让输出格式更稳定。
 
-XML 标签要注意三件事：标签名保持一致，嵌套层级对应，命名要有语义。
+XML 标签几个要点：标签名保持一致，嵌套层级对应，命名要有语义。
 
 比如用 `<analysis>`，不要用 `<tag1>`。
 
@@ -300,7 +334,7 @@ XML 标签要注意三件事：标签名保持一致，嵌套层级对应，命�
 
 比如你想让模型输出 JSON，可以在结尾加一个 `{`。模型就更容易直接输出 JSON 内容，而不是先来一句“好的，我来帮你提取”。
 
-## 复杂场景怎么处理
+## 复杂场景怎么处理？
 
 ### 长文本处理
 
@@ -358,9 +392,9 @@ XML 标签要注意三件事：标签名保持一致，嵌套层级对应，命�
 3. 如果找不到相关引用，说明"未找到相关引用"
 ```
 
-还可以做 N 次最佳验证。
+还可以做 Best-of-N 验证，或者叫多次采样一致性检查。
 
-同一个 Prompt 调多次，对比输出。如果几次答案差异很大，就说明模型可能在猜。
+同一输入跑 3-5 次，比较关键字段、引用证据和结论是否一致。若结论分歧大，需要回到检索证据、Schema 约束或 Prompt 边界上排查。
 
 也可以做迭代验证，把模型上一轮输出作为下一轮输入，让它检查事实、补充证据或者修正表述。
 
@@ -440,9 +474,9 @@ XML 标签要注意三件事：标签名保持一致，嵌套层级对应，命�
 <email>{{EMAIL}}</email>
 ```
 
-链式提示的好处是方便定位问题。
+链式提示最大的价值是方便定位问题。
 
-如果最后邮件写得差，你可以看是风险识别错了，还是沟通邮件生成错了，还是最后审查没做好。
+如果最后邮件写得差，你可以查是风险识别错了，还是沟通邮件生成错了，还是最后审查没做好。
 
 ## 企业级安全实践
 
@@ -468,19 +502,24 @@ Prompt 注入（Prompt Injection）指的是攻击者通过构造外部输入，
 
 这类问题在只聊天的应用里已经麻烦。到了能调用工具、能执行代码、能发邮件的 Agent 场景里，风险会更大。
 
+Prompt Injection 和 Jailbreak 经常被放在一起讲，但攻击目标不一样：
+
+| 类型             | 常见来源                                     | 主要目标                                      |
+| ---------------- | -------------------------------------------- | --------------------------------------------- |
+| Prompt Injection | 外部内容，比如网页、邮件、文档、工具返回结果 | 覆盖应用指令，诱导 Agent 调错工具或泄露上下文 |
+| Jailbreak        | 用户直接输入的对抗性指令                     | 绕过模型安全策略，让模型回答本不该回答的内容  |
+
+Agent 场景风险更高，因为模型不只是聊天，还可能调工具、写文件、发邮件、改数据库。工具返回内容也属于不可信输入，同样要做注入防护。
+
 ### 三层防护
 
 ![prompt-injection-protection-three-layer-defense-in-depth-system](https://oss.javaguide.cn/github/javaguide/ai/context-engineering/prompt-injection-protection-three-layer-defense-in-depth-system.svg)
 
 防护一般从三层做。
 
-执行层要收权限。
+最底层是权限控制。Agent 的代码执行环境要和宿主机隔离，可以用 Docker 或 WebAssembly 沙箱。API Key、数据库权限也要尽量收窄。危险操作需要额外授权，不能默认放开。
 
-Agent 的代码执行环境要和宿主机隔离，可以用 Docker 或 WebAssembly 沙箱。API Key、数据库权限也要尽量收窄。危险操作需要额外授权，不能默认放开。
-
-认知层要分清边界。
-
-System Prompt 和 User Input 不能混成一团。不可信内容要用分隔符包起来，比如：
+中间一层是把 System Prompt 和 User Input 分开。不可信内容要用分隔符包起来，比如：
 
 ```text
 ---USER_CONTENT_START---
@@ -490,9 +529,9 @@ System Prompt 和 User Input 不能混成一团。不可信内容要用分隔符
 
 这样可以明确告诉模型：这段是用户输入，不是系统指令。
 
-决策层要让人介入。
+但分隔符只能降低模型误把用户输入当指令的概率，不能替代权限控制。真正有副作用的操作，必须在代码层做鉴权、参数校验、沙箱隔离和人工确认。
 
-修改数据库、发送邮件、转账这类高危操作，执行前应该触发中断，把审批请求推给管理员。拿到授权后再继续。
+最上面一层是人工审批。修改数据库、发送邮件、转账这类高危操作，执行前应该触发中断，把审批请求推给管理员。拿到授权后再继续。
 
 ### 越狱与提示词注入怎么缓解
 
@@ -518,6 +557,8 @@ System Prompt 和 User Input 不能混成一团。不可信内容要用分隔符
 
 一个真实的上下文窗口里，通常会包含这些东西：
 
+![上下文窗口（Context Window）= LLM 的工作记忆](https://oss.javaguide.cn/github/javaguide/ai/llm/llm-context-window.png)
+
 - 系统提示词：角色、约束、输出格式
 - 工具上下文：可调用函数签名、上一步工具返回结果
 - 记忆上下文：短期对话历史、长期偏好检索
@@ -526,6 +567,8 @@ System Prompt 和 User Input 不能混成一团。不可信内容要用分隔符
 每一块都在抢窗口空间。真正麻烦的是取舍。
 
 该放什么，不该放什么，放多少，都要设计。
+
+关于 Context Engineering 的详细介绍，推荐阅读这篇：[上下文工程(Context Engineering) 是什么？和 Prompt Engineering 有什么区别？](./context-engineering.md)
 
 ### 提示词路由
 
@@ -540,50 +583,28 @@ System Prompt 和 User Input 不能混成一团。不可信内容要用分隔符
 - 复杂分析问题，走数据分析工具加总结生成
 - 代码调试问题，走代码检索加诊断 Agent
 
-这样做的好处是，每条路径只处理自己擅长的任务，不需要一个 Prompt 硬吃所有场景。
+这样每条路径只处理自己擅长的任务，不需要一个 Prompt 硬吃所有场景。
+
+这里最重要的是低置信度不要强行路由。宁可追问一句，也别把“删数据”路由到普通问答里。
 
 ### RAG 与混合检索
 
 RAG（检索增强生成）用外部知识库补模型的知识缺口。
 
-检索策略可以混着用。
-
-BM25 适合精确术语搜索。语义检索适合自然语言查询。混合检索可以兼顾关键词和语义。重排序负责把最终结果再筛一遍。HyDE 则是先生成一个假设性答案，再拿这个答案去检索。
+检索策略可以混着用。精确术语搜索用 BM25 更稳，自然语言查询走语义检索更合适。两者混着来能兼顾关键词和语义。重排序负责把最终结果再筛一遍。HyDE 更准确地说，是先让模型生成一个假设性文档或答案草稿，再用这段文本做向量检索查询扩展；它适合语义检索召回不足的场景，但也可能引入模型编造的查询偏差。
 
 实际项目里，很少只靠一种检索方式打天下。
 
 ### 工具系统怎么设计
 
-工具设计别搞太复杂，几个原则够用。
+工具设计别搞太复杂，几个原则够用：名称和描述要对 LLM 友好，语义要清楚；工具只封装技术逻辑，不要把主观决策塞进去；一个工具只做一件事，保持原子性；权限别给多，能读就别给写，能查一张表就别给整个库。
 
-名称和描述要对 LLM 友好，语义要清楚。
+MCP（Model Context Protocol）是连接 LLM 应用与外部数据源、工具的开放协议。它让不同 Agent 和 IDE 可以更容易接入外部工具；具体 transport、鉴权、工具注解和安全要求，应以对应 revision 的规范为准。
 
-工具只封装技术逻辑，不要把主观决策塞进去。
+## 总结
 
-一个工具只做一件事，保持原子性。
+Prompt Engineering 不是“写几句咒语”让模型变聪明，而是把任务边界、上下文、输出格式和失败兜底讲清楚。模型能力越强，越容易让人误以为 Prompt 不重要，但真实项目里，格式不稳定、边界不清、证据不足、安全约束缺失，最后都会变成工程问题。
 
-权限别给多，能读就别给写，能查一张表就别给整个库。
+好的 Prompt 不是越长越好，而是信息密度要高。角色、任务、背景、格式这四块要够清楚；CoT、Few-shot、Prompt Chaining、结构化输出这些技巧要按场景使用；涉及生产系统时，还要配合评测、Schema 校验、重试、权限控制和人工审批。不要指望一条 Prompt 解决所有问题。
 
-MCP 协议（Model Context Protocol）就是为工具调用标准化准备的开放协议。它让不同 Agent 和 IDE 可以更容易接入外部工具。
-
-## 推荐资料
-
-### 官方文档
-
-- [Claude Prompt Engineering](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview)
-- [Anthropic Prompting Best Practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices)
-- [Google Prompt Engineering](https://cloud.google.com/discover/what-is-prompt-engineering)
-- [Spring AI Structured Output](https://docs.spring.io/spring-ai/reference/api/structured-output-converter.html)
-
-### 开源资源
-
-- [Prompt Engineering Guide](https://github.com/dair-ai/Prompt-Engineering-Guide)
-- [Anthropic Agentic Design Patterns](https://docs.google.com/document/d/1rsaK53T3Lg5KoGwvf8ukOUvbELRtH-V0LnOIFDxBryE/edit)
-- [Agentic Context Engineering](https://www.arxiv.org/pdf/2510.04618)
-- [LLM based Autonomous Agents Survey](https://arxiv.org/pdf/2308.11432)
-
-### 进阶阅读
-
-- [ACP 协议官方文档](https://agentclientprotocol.com/get-started/introduction)
-- [MCP 协议介绍](https://www.anthropic.com/news/model-context-protocol)
-- [LangGraph Agentic RAG](https://langchain-ai.github.io/langgraph/tutorials/rag/langgraph_agentic_rag/)
+上手最快的路径，是先选 10-30 条真实样例，把当前 Prompt 跑出基线，再一轮一轮补约束、看指标、沉淀失败样例。Prompt Engineering 的核心不是一次写对，而是建立一套能持续迭代、可验证、可回归的提示词工程流程。
